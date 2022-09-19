@@ -353,3 +353,117 @@
         - Source: "https://docs.djangoproject.com/en/4.1/topics/db/queries/"
     
     -> type "exit()" if you want to exit from the 
+
+
+
+
+------------------------------ WORKING WITH ADMIN SITE -------------------------------
+
+## creating '/blog-admin' like '/admin'
+    -> in the "/blog/admin.py", write these lines:
+        * # Register your models here.
+        * class BlogAdminArea(admin.AdminSite):
+        *     site_header: str = 'Blog Admin Area'
+        *     
+        * blog_site = BlogAdminArea(name = 'BlogAdmin')
+
+    -> in the "/core/urls.py", write this:
+        * from django.contrib import admin
+        * from django.urls import path
+        * from blog.admin import blog_site
+        * 
+        * urlpatterns = [
+        *     path('admin/', admin.site.urls),
+        *     path('blog-admin/', blog_site.urls),
+        * ]
+
+    -> go to "127.0.0.1/blog-admin" and see the result
+
+
+
+## working with "/blog-admin" along with "/admin"
+    -> create a MODEL named "Post":
+        - in "blog/models.py", write this:
+        * # Create your models here.
+        * class Post(models.Model):
+        *     title = models.CharField(max_length=100)
+        *     
+        *     def __str__(self):
+        *         return self.title
+
+    -> register it into the "blog-admin" and "admin" site:
+        - in "blog/admin.py", the codes will be like this:
+        * from django.contrib import admin
+        * from blog.models import Post
+        * 
+        * # Register your models here.
+        * class BlogAdminArea(admin.AdminSite):
+        *     site_header: str = 'Blog Admin Area'
+        *     
+        * blog_site = BlogAdminArea(name = 'BlogAdmin')
+        * 
+        * ................the next lines are new..................
+        * admin.site.register(Post)
+        * blog_site.register(Post)
+        * ...................new lines end here...................
+    
+    -> go to "127.0.0.1/blog-admin" and "127.0.0.1/admin"
+        - you will see the "Post" is registered
+
+## make "/blog-admin" as the default "/admin" site
+    -> in "blog/apps.py", create an app:
+        * from email.policy import default
+        * from django.apps import AppConfig
+        * from django.contrib.admin.apps import AdminConfig
+        * 
+        *................ New Code Section ...................
+        * class BlogAdminConfig(AdminConfig):
+        *     default_site: str = 'blog.admin.BlogAdminArea'
+        *..................New code sections end here.........
+        * 
+        * class BlogConfig(AppConfig):
+        *     default_auto_field = 'django.db.models.BigAutoField'
+        *     name = 'blog'
+    
+    -> in "core/settings.py" add the "BlogAdminArea" app:
+        * INSTALLED_APPS = [
+        *     # 'django.contrib.admin',
+            .............new line.............
+        *     'blog.apps.BlogAdminConfig',
+            ........... new line ends ........
+        *     'django.contrib.auth',
+        *     'django.contrib.contenttypes',
+        *     'django.contrib.sessions',
+        *     'django.contrib.messages',
+        *     'django.contrib.staticfiles',
+        *     'bookstore.apps.BookstoreConfig',
+        *     'blog.apps.BlogConfig'
+        * ]
+
+    *** SOME QUESTIONS:
+        - when we are going to "127.0.0.1/admin" we are not seeing any model called "Post" [ we have already registered the "Post" model into the "blog_site" ]
+        - when we are going to "127.0.0.1/blog-admin" we are not seeing any model called "User"/"GROUPS" [ we have set "BlogAdminArea" as the default admin-site ]
+
+## add "/bookstore-admin", like "/blog-admin"
+    -> in "bookstore/admin.py" add these lines:
+        * from django.contrib import admin
+        * 
+        * # Register your models here.
+        * class BookStoreAdminArea(admin.AdminSite):
+        *     site_header: str = 'Bookstore Admin Area'
+        *     
+        * bookstore_site = BookStoreAdminArea(name = 'BookStoreAdmin')
+
+    -> in "core/urls/py" add this url:
+        * from django.contrib import admin
+        * from django.urls import path
+        * from blog.admin import blog_site
+        * from bookstore.admin import bookstore_site
+        * 
+        * urlpatterns = [
+        *     path('admin/', admin.site.urls),
+        *     path('blog-admin/', blog_site.urls),
+            .............new line starts................
+        *     path('bookstore-admin/', bookstore_site.urls),
+            .............new line ends .................
+        * ]
